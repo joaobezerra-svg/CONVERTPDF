@@ -1,0 +1,13 @@
+streamlit
+PyPDF2
+pandas
+openpyxl
+tabula-py
+fpdf
+pdf2docx
+docx2pdf
+Pillow
+pdf2image
+pdfkit
+reportlab
+pikepdf
