@@ -20,10 +20,8 @@ try:
 except ImportError:
     Converter = None
 
-try:
-    from docx2pdf import convert as docx2pdf_convert
-except ImportError:
-    docx2pdf_convert = None
+# docx2pdf removido em favor do LibreOffice via subprocess
+docx2pdf_convert = None
 
 try:
     from PIL import Image
@@ -356,27 +354,44 @@ elif choice == "Excel para PDF":
 
 elif choice == "Word para PDF":
     st.header("Word para PDF")
-    st.warning("Requer Microsoft Word instalado se estiver no Windows (docx2pdf).")
+    st.info("Utiliza LibreOffice. Funciona localmente (se instalado) e no Streamlit Cloud.")
     uploaded_file = st.file_uploader("Envie seu .docx", type=['docx'])
     if uploaded_file:
         if st.button("Converter para PDF"):
-            if not docx2pdf_convert:
-                st.error("A biblioteca 'docx2pdf' não está instalada.")
-            else:
-                with st.spinner("Convertendo via MS Word em background..."):
-                    try:
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp_docx:
-                            tmp_docx.write(uploaded_file.getvalue())
-                        tmp_pdf = tmp_docx.name.replace(".docx", ".pdf")
+            with st.spinner("Convertendo (via LibreOffice em background)..."):
+                try:
+                    import subprocess
+                    
+                    # Cria diretório temporário seguro para a operação
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        input_docx = os.path.join(temp_dir, "input.docx")
+                        with open(input_docx, "wb") as f:
+                            f.write(uploaded_file.getvalue())
                         
-                        import pythoncom
-                        pythoncom.CoInitialize() # Necessário em Streamlit
-                        docx2pdf_convert(tmp_docx.name, tmp_pdf)
+                        # Executa libreoffice headless
+                        # soffice é o alias comum para libreoffice no Windows e Linux
+                        cmd = [
+                            "soffice",
+                            "--headless",
+                            "--convert-to", "pdf",
+                            "--outdir", temp_dir,
+                            input_docx
+                        ]
                         
-                        with open(tmp_pdf, "rb") as f:
-                            st.download_button("Baixar PDF", data=f.read(), file_name="documento.pdf", mime="application/pdf")
-                    except Exception as e:
-                        st.error(f"Erro na conversão: {e}")
+                        process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        
+                        if process.returncode != 0:
+                            st.error("Erro ao executar LibreOffice. Verifique se ele está instalado no sistema e acessível via CLI ('soffice').")
+                            st.write(process.stderr.decode("utf-8", "ignore"))
+                        else:
+                            output_pdf = os.path.join(temp_dir, "input.pdf")
+                            if os.path.exists(output_pdf):
+                                with open(output_pdf, "rb") as f:
+                                    st.download_button("Baixar PDF", data=f.read(), file_name="documento.pdf", mime="application/pdf")
+                            else:
+                                st.error("O arquivo PDF não foi gerado.")
+                except Exception as e:
+                    st.error(f"Erro na conversão: {e}")
 
 elif choice == "JPG para PDF":
     st.header("JPG para PDF")
