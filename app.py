@@ -31,9 +31,14 @@ except ImportError:
     Image = None
 
 try:
-    import pdf2image
+    from pdf2image import convert_from_bytes
 except ImportError:
-    pdf2image = None
+    convert_from_bytes = None
+
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    fitz = None
 
 try:
     import pdfkit
@@ -188,7 +193,7 @@ if "1. ORGANIZAR" in categoria:
 elif "2. OTIMIZAR" in categoria:
     choice = st.sidebar.radio("Ferramentas", ["Comprimir PDF", "Reparar PDF"])
 elif "3. CONVERTER PARA" in categoria:
-    choice = st.sidebar.radio("Ferramentas", ["Excel para PDF", "Word para PDF", "JPG para PDF", "HTML para PDF"])
+    choice = st.sidebar.radio("Ferramentas", ["Excel para PDF", "Word para PDF", "JPG para PDF"])
 elif "4. CONVERTER DE" in categoria:
     choice = st.sidebar.radio("Ferramentas", ["PDF para Excel", "PDF para Word", "PDF para JPG"])
 elif "5. EDITAR" in categoria:
@@ -388,23 +393,6 @@ elif choice == "JPG para PDF":
                 except Exception as e:
                     st.error(f"Erro: {e}")
 
-elif choice == "HTML para PDF":
-    st.header("HTML para PDF")
-    url = st.text_input("Digite o endereço URL completo (ex: https://google.com)")
-    if st.button("Gerar PDF"):
-        if not pdfkit:
-            st.error("Instale 'pdfkit' e o sistema 'wkhtmltopdf' na máquina.")
-        else:
-            try:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                    # Config básica do pdfkit para evitar falsos erros de carregamento
-                    options = {'enable-local-file-access': ''}
-                    pdfkit.from_url(url, tmp.name, options=options)
-                    with open(tmp.name, "rb") as f:
-                        st.download_button("Baixar Site em PDF", data=f.read(), file_name="site.pdf", mime="application/pdf")
-            except Exception as e:
-                st.error(f"Erro: Depende da instalação extra do wkhtmltopdf no Windows. {e}")
-
 # ----------------- 4. CONVERTER DE PDF -----------------
 elif choice == "PDF para Excel":
     st.header("PDF para Excel")
@@ -461,25 +449,35 @@ elif choice == "PDF para Word":
 
 elif choice == "PDF para JPG":
     st.header("PDF para JPG")
-    st.warning("Requer 'Poppler' instalado no Windows/Binaries.")
+    st.info("Utiliza pdf2image. Poppler já está configurado localmente na pasta Downloads.")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     if uploaded_file:
         if st.button("Converter Todas as Páginas"):
-            if not pdf2image:
-                st.error("Instale 'pdf2image' e o Binário do Poppler.")
+            if not convert_from_bytes:
+                st.error("Instale 'pdf2image' executando: pip install pdf2image")
             else:
                 try:
-                    images = pdf2image.convert_from_bytes(uploaded_file.getvalue())
-                    zip_io = io.BytesIO()
-                    with zipfile.ZipFile(zip_io, 'w') as zip_file:
-                        for i, img in enumerate(images):
-                            img_byte_arr = io.BytesIO()
-                            img.save(img_byte_arr, format='JPEG')
-                            zip_file.writestr(f"pagina_{i+1}.jpg", img_byte_arr.getvalue())
-                    st.success(f"{len(images)} página(s) convertidas!")
-                    st.download_button("Baixar ZIP com Imagens", data=zip_io.getvalue(), file_name="paginas_jpg.zip", mime="application/zip")
+                    # DEFINA O CAMINHO CORRETO PARA A PASTA BIN DO POPPLER
+                    import os
+                    # Usar caminho absoluto no servidor local
+                    caminho_poppler = r"C:\Users\SEDUC\Downloads\poppler\poppler-24.08.0\Library\bin"
+                    
+                    with st.spinner("Convertendo as páginas, por favor aguarde..."):
+                        # O poppler_path aponta para o binário do poppler no Windows
+                        # Caso esteja no PATH do sistema, você pode remover o poppler_path.
+                        images = convert_from_bytes(uploaded_file.getvalue(), poppler_path=caminho_poppler)
+                        
+                        zip_io = io.BytesIO()
+                        with zipfile.ZipFile(zip_io, 'w') as zip_file:
+                            for page_num, image in enumerate(images):
+                                img_byte_arr = io.BytesIO()
+                                image.save(img_byte_arr, format='JPEG', quality=95)
+                                zip_file.writestr(f"pagina_{page_num+1}.jpg", img_byte_arr.getvalue())
+                        
+                        st.success(f"{len(images)} página(s) convertidas!")
+                        st.download_button("Baixar ZIP com Imagens", data=zip_io.getvalue(), file_name="paginas_jpg.zip", mime="application/zip")
                 except Exception as e:
-                    st.error(f"Erro: {e}")
+                    st.error(f"Erro: O 'Poppler' não foi encontrado ou o caminho está incorreto. {e}")
 
 # ----------------- 5. EDITAR -----------------
 elif choice == "Rodar PDF":
