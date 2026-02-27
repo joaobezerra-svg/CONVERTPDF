@@ -220,6 +220,7 @@ elif choice == "Dividir PDF":
     st.header("Dividir PDF")
     uploaded_file = st.file_uploader("Envie o PDF para dividir", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         reader = PyPDF2.PdfReader(uploaded_file)
         num_pages = len(reader.pages)
         st.write(f"O documento contém **{num_pages}** páginas.")
@@ -239,6 +240,7 @@ elif choice == "Remover Páginas":
     st.header("Remover Páginas")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         pages_to_remove = st.text_input("Páginas a remover (separadas por vírgula. Ex: 1, 3, 5)")
         if st.button("Remover"):
             reader = PyPDF2.PdfReader(uploaded_file)
@@ -259,6 +261,7 @@ elif choice == "Organizar PDF":
     st.header("Organizar PDF (Reordenar)")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         reader = PyPDF2.PdfReader(uploaded_file)
         st.write(f"Documento com **{len(reader.pages)}** páginas.")
         new_order = st.text_input("Nova ordem das páginas (Ex: 3, 1, 2)")
@@ -280,6 +283,7 @@ elif choice == "Comprimir PDF":
     st.header("Comprimir PDF")
     uploaded_file = st.file_uploader("Envie o PDF para comprimir", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         if st.button("Comprimir"):
             reader = PyPDF2.PdfReader(uploaded_file)
             writer = PyPDF2.PdfWriter()
@@ -297,6 +301,7 @@ elif choice == "Reparar PDF":
     st.info("Utiliza a biblioteca pikepdf para reparar estruturas de PDFs corrompidas.")
     uploaded_file = st.file_uploader("Envie o PDF corrompido", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         if st.button("Reparar"):
             if not pikepdf:
                 st.error("A biblioteca 'pikepdf' não está instalada. Instale via requirements.txt.")
@@ -398,6 +403,7 @@ elif choice == "PDF para Excel":
     st.header("PDF para Excel")
     uploaded_file = st.file_uploader("Envie seu PDF", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         if st.button("Converter Múltiplas Tabelas"):
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
                 tmp_pdf.write(uploaded_file.getbuffer())
@@ -428,6 +434,7 @@ elif choice == "PDF para Word":
     st.header("PDF para Word")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         if st.button("Converter para Word"):
             if not Converter:
                 st.error("Instale a biblioteca 'pdf2docx'.")
@@ -452,6 +459,7 @@ elif choice == "PDF para JPG":
     st.info("Utiliza pdf2image. Poppler já está configurado localmente na pasta Downloads.")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         if st.button("Converter Todas as Páginas"):
             if not convert_from_bytes:
                 st.error("Instale 'pdf2image' executando: pip install pdf2image")
@@ -490,6 +498,7 @@ elif choice == "Rodar PDF":
     st.header("Rodar PDF")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         angle = st.selectbox("Ângulo de rotação", [90, 180, 270])
         if st.button("Aplicar Rotação"):
             reader = PyPDF2.PdfReader(uploaded_file)
@@ -506,6 +515,7 @@ elif choice == "Numerar Páginas":
     st.header("Numerar Páginas")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         if st.button("Adicionar Numeração (Rodapé Central)"):
             if not canvas:
                 st.error("Instale a biblioteca 'reportlab' via requirements.txt")
@@ -534,6 +544,8 @@ elif choice == "Marca d'água":
     st.header("Marca d'água")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     text = st.text_input("Texto da Marca d'água", "CONFIDENCIAL")
+    if uploaded_file:
+        display_pdf(uploaded_file)
     if uploaded_file and text:
         if st.button("Aplicar Marca d'Água"):
             if not canvas:
@@ -567,6 +579,7 @@ elif choice == "Editar Texto":
     st.header("Anotação / Texto Personalizado")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     if uploaded_file:
+        display_pdf(uploaded_file)
         texto = st.text_input("Texto para adicionar na primeira página")
         x = st.slider("Posição X (Horizontal)", 0, 800, 100)
         y = st.slider("Posição Y (Vertical)", 0, 800, 700)
@@ -601,6 +614,8 @@ elif choice == "Proteger PDF":
     st.header("Proteger PDF")
     uploaded_file = st.file_uploader("Envie o PDF", type='pdf')
     senha = st.text_input("Senha", type="password")
+    if uploaded_file:
+        display_pdf(uploaded_file)
     if uploaded_file and senha:
         if st.button("Criptografar PDF"):
             reader = PyPDF2.PdfReader(uploaded_file)
@@ -617,6 +632,8 @@ elif choice == "Desbloquear PDF":
     st.header("Desbloquear PDF")
     uploaded_file = st.file_uploader("Envie o PDF protegido", type='pdf')
     senha = st.text_input("Senha atual para remover proteção", type="password")
+    if uploaded_file:
+        display_pdf(uploaded_file)
     if uploaded_file and senha:
         if st.button("Remover Senha"):
             reader = PyPDF2.PdfReader(uploaded_file)
