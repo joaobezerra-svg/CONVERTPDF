@@ -459,13 +459,19 @@ elif choice == "PDF para JPG":
                 try:
                     # DEFINA O CAMINHO CORRETO PARA A PASTA BIN DO POPPLER
                     import os
-                    # Usar caminho absoluto no servidor local
-                    caminho_poppler = r"C:\Users\SEDUC\Downloads\poppler\poppler-24.08.0\Library\bin"
+                    
+                    # Identifica o ambiente: Se for Windows, usa o poppler baixado no modo Local.
+                    # Se for Linux (Streamlit Cloud), usa o instalado no sistema via packages.txt
+                    if os.name == 'nt':
+                        caminho_poppler = r"C:\Users\SEDUC\Downloads\poppler\poppler-24.08.0\Library\bin"
+                    else:
+                        caminho_poppler = None
                     
                     with st.spinner("Convertendo as páginas, por favor aguarde..."):
-                        # O poppler_path aponta para o binário do poppler no Windows
-                        # Caso esteja no PATH do sistema, você pode remover o poppler_path.
-                        images = convert_from_bytes(uploaded_file.getvalue(), poppler_path=caminho_poppler)
+                        if caminho_poppler and os.path.exists(caminho_poppler):
+                            images = convert_from_bytes(uploaded_file.getvalue(), poppler_path=caminho_poppler)
+                        else:
+                            images = convert_from_bytes(uploaded_file.getvalue())
                         
                         zip_io = io.BytesIO()
                         with zipfile.ZipFile(zip_io, 'w') as zip_file:
