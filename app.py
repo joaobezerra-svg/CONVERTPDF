@@ -9,6 +9,11 @@ import base64
 import tempfile
 import zipfile
 
+try:
+    from streamlit_pdf_viewer import pdf_viewer
+except ImportError:
+    pdf_viewer = None
+
 # Dependências extras requeridas
 try:
     import pikepdf
@@ -156,9 +161,17 @@ def set_background(image_file):
     st.markdown(common_css, unsafe_allow_html=True)
 
 def display_pdf(uploaded_file):
+    if pdf_viewer:
+        try:
+            pdf_viewer(input=uploaded_file.getvalue(), width=700)
+            return
+        except Exception as e:
+            pass # Fallback para o iframe em caso de erro
+
+    # Fallback method
     bytes_data = uploaded_file.getvalue()
     base64_pdf = base64.b64encode(bytes_data).decode('utf-8')
-    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="400" type="application/pdf" style="border-radius:10px; border:2px solid #B43BE8;"></iframe>'
+    pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="500" type="application/pdf" style="border-radius:10px; border:2px solid #B43BE8;">'
     st.markdown(pdf_display, unsafe_allow_html=True)
 
 st.set_page_config(page_title="CONVERTPDF", page_icon="📄", layout="centered")
@@ -201,10 +214,13 @@ elif "6. SEGURANÇA" in categoria:
 
 # ----------------- 1. ORGANIZAR -----------------
 if choice == "Juntar PDF":
-    st.header("Juntar NFTs") # wait, Juntar PDFs
     st.header("Juntar PDF")
     uploaded_files = st.file_uploader("Envie os PDFs que deseja juntar", type='pdf', accept_multiple_files=True)
-    if uploaded_files and len(uploaded_files) > 1:
+    if uploaded_files:
+        if len(uploaded_files) > 1:
+            for i, pdf_file in enumerate(uploaded_files):
+                st.write(f"Visualização: **{pdf_file.name}**")
+                display_pdf(pdf_file)
         if st.button("Juntar"):
             merger = PyPDF2.PdfMerger()
             for pdf in uploaded_files:
