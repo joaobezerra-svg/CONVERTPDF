@@ -7,7 +7,6 @@ fpdf
 pdf2docx
 Pillow
 pdf2image
-pdfkit
 reportlab
 pikepdf
 streamlit-pdf-viewer
