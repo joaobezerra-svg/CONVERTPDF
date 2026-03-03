@@ -5,7 +5,6 @@ openpyxl
 tabula-py
 fpdf
 pdf2docx
-docx2pdf
 Pillow
 pdf2image
 pdfkit
